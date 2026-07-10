@@ -1,148 +1,178 @@
-# 🎬 CINEMATIC PLAN v2 — "The Toss" (Blender film-grade pipeline)
+# 🎬 CINEMATIC PLAN v3 — "THE WAGER" (GTA-cutscene grade, 15–30 s per flip)
 
-> Goal: the toss should play like a scene cut from Peaky Blinders — a backlit man
-> in a smoky bar flicks a heavy sovereign, the camera moves like a film camera,
-> time dilates at the apex, and the coin slams down for the reveal.
+> Target look: a **GTA-style in-game cutscene** — realistic characters, a lived-in
+> 1920s bar, film-language cameras (crane, rack focus, cut-on-action), heavy
+> atmosphere, cinematic grade. One flip = one **25-second scene** (configurable
+> 15–30 s, skippable at any moment).
 >
-> This machine: **i5-11260H (12 threads) · 16 GB RAM · NVIDIA RTX 3050 Laptop (OptiX)** —
-> all render estimates below are grounded in this hardware.
+> Render machine: **i5-11260H · 16 GB RAM · RTX 3050 Laptop 4 GB (OptiX)** —
+> every estimate below is grounded in this hardware.
 
 ---
 
-## ⏱️ The headline answers
+## ⏱️ Headline numbers
 
 | Question | Answer |
 |---|---|
-| How long is one coin toss on screen? | **~8 seconds** (skippable by tap; "Quick toss" mode stays) |
-| How long to render the photoreal **coin asset** (90 frames, 1024², Cycles+OptiX)? | **~7–15 s/frame → 10–25 min total render** + ~1–2 h one-time modeling/look-dev |
-| How long to render the **full scene film** (one 8 s variant)? | **EEVEE: ~15–40 min** · Cycles w/ volumetrics: ~4–12 h |
-| Both variants (heads + tails endings)? | EEVEE: **under 1.5 h** · Cycles: 1–2 overnights |
-| Total human effort (modeling, animation, lighting, integration)? | **~5–8 focused days** |
+| One flip on screen | **~25 s full scene** (15 s "Short" cut and instant "Quick toss" also shipped — see §6) |
+| Photoreal hero **coin asset** (90 frames, reused app-wide) | ~7–15 s/frame → **10–25 min render** + 1–2 h modeling |
+| Full scene render, **hybrid** EEVEE/Cycles (recommended) | **≈ 4–12 h GPU total** for BOTH endings |
+| Full scene render, **all-Cycles ultra** | 20–50 h (2–3 overnights, scripted + resumable) |
+| Added app size | **+20–30 MB** (segmented videos, H.264 CRF 20 letterboxed) |
+| Total production effort | **≈ 2–4 weeks focused** (this is a real short-film pipeline) |
 
 ---
 
-## 1. Creative direction
+## 1. Why this is achievable at "GTA grade"
 
-**Reference grammar (Peaky Blinders):** low-key tungsten light, heavy backlight
-through haze, silhouettes with rim light, slow deliberate camera moves, shallow
-depth of field, anamorphic-feel flares, desaturated shadows / warm highlights,
-2.39:1 letterbox.
+GTA cutscenes read as real because of **lighting, camera language, animation
+weight, and grade** — not raw polygon counts. On a phone screen at 804 p
+letterboxed, a Blender scene with:
+- mocap-based body animation (Mixamo, free),
+- believable skin/cloth shaders + shallow DoF,
+- volumetric smoke and hard backlight,
+- 2.39:1 bars, grain, halation, teal-shadow/amber-highlight grade
 
-**Rule:** the camera is always moving — even "static" shots breathe (handheld
-micro-drift). Every cut lands on a sound.
-
----
-
-## 2. The film — shot by shot (~8 s total)
-
-| # | Shot | Dur | Camera & lens (Blender) | Action | Light | Sound |
-|---|------|-----|--------------------------|--------|-------|-------|
-| 1 | **The Bar** (establishing) | 1.8 s | 35 mm, dolly R→L on a curved track, f/2.8, focus on the man | Smoky bar. Backlit man at a table, coat + flat cap, cigarette smoke curling through a window light shaft. Coin glints on his thumb. Letterbox bars slide in | Single hard window key behind him (volumetric shaft), warm practical lamps as bokeh | Bar murmur, distant gramophone, cloth rustle |
-| 2 | **The Flick** (close-up) | 1.4 s | 85 mm macro push-in on the hand, f/1.8 razor DoF | Stillness — one breath. Thumb tenses… **flick.** Coin leaves frame top; camera **tilts up** to follow, motion blur streaks | Rim on knuckles from the window; coin catches a hot glint at launch | Near-silence → metallic *ting* → rising whoosh |
-| 3 | **The Apex** (slow-motion) | 3.0 s | 100 mm, slow **orbit** (15° arc) around the hovering coin, f/2.0 | Time dilates to ~5 %. The sovereign turns lazily in the light shaft, dust motes suspended, engraving flashing H…T…H. A smoke wisp curls past behind it | Coin *inside* the volumetric shaft — edge flares each half-turn; background falls to black | Audio low-passes into a sub drone + slowed heartbeat; each glint = soft chime |
-| 4 | **The Land & Reveal** | 1.8 s + hold | **Whip-pan down** (8 frames, heavy directional blur) → 65 mm dolly-in on the coin face | Time snaps back. Coin **slams** onto the oak table, bounces once with sparks, wobble-settles. Camera pushes in tight on the face; light flares across the engraving → **HEADS / TAILS** title | Key flares up on impact, then settles into a hero spotlight on the coin | Snap-whoosh → heavy clink + felt thud + haptic → brass reveal sting |
-
-**The two-variant trick:** the result is decided *before* playback, so we render
-**two videos** — identical through Shot 3, different landing face in Shot 4:
-`toss_heads.mp4`, `toss_tails.mp4`. The app just picks one. No runtime 3D needed.
+…lands squarely in that territory. Faces are kept in half-shadow and profile
+(Peaky lighting), which is both the aesthetic *and* what sells realism cheaply.
 
 ---
 
-## 3. Blender production pipeline
+## 2. The scene — "The Wager" (screenplay + shot list, 25 s master cut)
 
-### 3.1 Assets to build (one-time)
+**Cast (3 men, as briefed):** THE TOSSER (center, coin man), the CHALLENGER
+(across the table), the WITNESS (standing, smoking). A dispute is being settled
+the old way.
 
-| Asset | Approach | Est. effort |
-|---|---|---|
-| **The coin** (hero) | Cylinder + milled edge (procedural bump), sculpted/displaced H & T reliefs, aged-brass PBR (anisotropic brushed metal, edge wear via pointiness mask, fingerprints roughness map) | 1–2 h |
-| **The man** | Silhouette-first: base mesh (or free CC0 scan) + long coat cloth sim + flat cap; NO facial detail needed — he's always backlit. Rig: simple armature, only the right arm needs real animation | 3–5 h |
-| **The set** | One wall + window (light shaft source), oak table, 3–4 bottle/glass props for bokeh, floor. Low poly — it lives in shadow | 2–3 h |
-| **Smoke / haze** | Two layers: room haze = Principled Volume (cheap), cigarette wisp = small smoke sim baked once (~20 min bake) | 1–2 h |
-| **Animation** | Arm flick (12 frames of keyframes + follow-through), coin ballistic + spin via keyframed physics-match, camera paths on curves, wobble-settle on landing | 3–4 h |
+| # | TC | Shot | Lens / camera | Action | Audio |
+|---|----|------|---------------|--------|-------|
+| 1 | 0:00–0:04 | **Crane down** through smoke | 28 mm, top-down crane descending past a hanging lamp into the table | The bar at night. Rain on the window. Three men around a table — tension. Letterbox bars close in. Title whisper: *"Call it."* | Rain, muffled gramophone, thunder roll |
+| 2 | 0:04–0:07 | **Faces** (coverage) | 65 mm, slow lateral dolly; rack focus Challenger → Witness | Challenger leans forward, jaw set. Witness drags his cigarette; the ember flares, smoke crosses the lamp light | Cigarette crackle, chair creak |
+| 3 | 0:07–0:10 | **The coin comes out** | 50 mm, push-in on the Tosser | He rises slowly (mocap stand), reaches into his waistcoat, produces the sovereign. Rolls it once across his knuckles | Coat rustle, coin-on-skin whisper |
+| 4 | 0:10–0:12 | **Macro — the set** | 100 mm macro, f/1.8, micro handheld drift | Coin on thumbnail. Every scratch visible. A beat of absolute stillness — the room holds its breath | Room tone drops away; heartbeat enters |
+| 5 | 0:12–0:13.5 | **The flick** (cut on action) | Two angles cut mid-flick: side 85 mm → low-angle 35 mm looking up past his chin | Thumb fires. Coin leaves frame; low angle catches it rising past his face into the lamp light | *TING* → rising whoosh |
+| 6 | 0:13.5–0:19 | **THE APEX** (hero slow-mo) | 100 mm, 20° orbit + slow rise, f/2.0 | Time collapses to 4 %. The sovereign turns lazily inside the volumetric shaft; dust hangs; the engraving strobes H…T…H; in the coin's polished rim, the three warped faces stare up | Sub-drone + slowed heartbeat; a soft chime on each glint |
+| 7 | 0:19–0:21 | **The drop** | Whip-tilt down (10 frames, heavy directional blur) → 65 mm high-speed tracking | Time snaps back. Coin plummets, **slams** the oak, bounces once — sparks — wobble-settles | Snap-whoosh → CLINK + table thud (haptic) |
+| 8 | 0:21–0:24 | **Reveal** | 85 mm dolly-in to macro on the face | Lamplight flares across the engraving. **HEADS / TAILS** title stamps in engraved gold | Brass sting |
+| 9 | 0:24–0:25+ | **Reactions** (ending-specific) | 65 mm, two quick cuts | Winner's slow smirk; loser exhales smoke and looks away. Hold on the coin | Gramophone swells back, rain returns |
 
-### 3.2 Render strategy (the pragmatic hybrid)
-
-- **Shots 1, 2, 4 → EEVEE-Next**: volumetric shafts, bloom, DoF, motion blur are
-  all excellent in EEVEE and render in seconds per frame. Film grain added in
-  post anyway — nobody can tell on a phone screen.
-- **Shot 3 (the hero slow-mo) → Cycles + OptiX**: this is the money shot where
-  real metal reflections matter. 3 s × 24 fps = 72 frames, ~2048×858 letterboxed.
-- Composite pass (grain, vignette, subtle chromatic aberration, grade) in
-  Blender's compositor or ffmpeg.
-
-### 3.3 Render settings & times (RTX 3050, OptiX denoise)
-
-| Job | Frames | Res | Engine / samples | Per frame | Total |
-|---|---|---|---|---|---|
-| Coin asset frames (for app widget/icon reuse) | 90 | 1024² | Cycles 128 + OptiX denoise | 7–15 s | **10–25 min** |
-| Shots 1+2+4 (per variant) | ~120 | 1920×804 | EEVEE-Next | 3–8 s | 6–16 min |
-| Shot 3 hero slow-mo (shared) | 72 | 1920×804 | Cycles 192 + denoise + volume shaft | 45–120 s | 55 min–2.4 h |
-| **One full variant** | ~192 | — | hybrid | — | **≈ 1–3 h** |
-| **Both variants** (Shot 3 shared!) | ~312 | — | hybrid | — | **≈ 1.3–3.5 h** |
-| All-Cycles "maximum" version (optional) | 384 | 1920×804 | Cycles 256 + volumetrics | 2–6 min | 13–38 h (overnights) |
-
-> ⚠️ RTX 3050 Laptop has 4 GB VRAM — keep textures ≤2K, bake the smoke sim at
-> modest resolution, and render shots as separate scenes to stay inside memory.
-
-### 3.4 Output files
+### The variant strategy (critical for size + render time)
+Result is decided at tap-time, so the film is **segmented**:
 
 ```
-assets/video/toss_heads.mp4   (~8s, H.264, 1920×804, ~6–8 MB @ CRF 20)
-assets/video/toss_tails.mp4
-assets/coin/frame_###.png     (photoreal replacements, drop-in — zero code change)
+intro.mp4     0:00–0:12   shared            (~12 s)
+flick.mp4     0:12–0:21   shared            (~9 s — flick, apex, drop-to-blur)
+end_heads.mp4 0:21–0:25   heads landing + reactions (~4–5 s)
+end_tails.mp4 0:21–0:25   tails landing + reactions (~4–5 s)
 ```
-
-APK grows ~12–16 MB. Acceptable; still ~35 MB delivered.
-
----
-
-## 4. Flutter integration
-
-1. **`video_player`** plugin; both MP4s bundled as assets, pre-initialized at
-   app start (instant playback on tap).
-2. Tap → decide result → play matching video full-screen under the existing
-   grain/vignette overlays (they stay live Flutter layers, so the image still
-   feels alive over the video).
-3. **Skip:** tap during playback → seek to the landing timestamp (≈ 6.2 s).
-4. **Sound:** baked into the video track (perfect sync, replaces per-event SFX
-   during the sequence); haptic fired at the landing timestamp from Dart.
-5. **Reveal text + sparks** stay as live Flutter layers on top (crisper than
-   baked-in text, and localizable).
-6. **Fallback:** current procedural 2.5D scene remains in the code path for
-   "Quick toss" mode and as insurance.
-7. Home-screen widget upgrades automatically when the photoreal coin frames
-   replace the procedural ones (same filenames).
+Only ~5 s is duplicated. Playback is gapless via two pre-initialized
+`video_player` controllers. **Total video ≈ 20–30 MB.**
 
 ---
 
-## 5. Phases & schedule
+## 3. Production pipeline (Blender, all on this machine)
 
-| Phase | Work | Est. |
+### 3.1 Characters — the "GTA" part
+| Element | Approach | Effort |
 |---|---|---|
-| **B1 — Setup** | Fetch portable Blender (~350 MB, no root needed) into scratchpad; verify OptiX sees the RTX 3050 | 0.5 h |
-| **B2 — Hero coin** | Model + shade the sovereign; render the 90-frame asset sequence → instantly upgrades app + widget | 2–3 h (render: 10–25 min) |
-| **B3 — Set & man** | Build set, haze, silhouette man, cloth/cap | 1 day |
-| **B4 — Animation & cameras** | Flick, ballistic coin, 4 camera paths, wobble-settle | 1 day |
-| **B5 — Light & look-dev** | Window shaft, practicals, per-shot grade, test stills approved | 0.5–1 day |
-| **B6 — Render + post** | Batch render both variants (≈1.3–3.5 h GPU time), grain/grade pass, encode | 0.5 day |
-| **B7 — App integration** | video_player flow, skip, haptic sync, Quick-toss fallback, perf test | 1 day |
-| **B8 — Ship** | Version bump → push → CI publishes signed APK/AAB release | 0.5 h |
+| Bodies & faces | 3 base humans from **MakeHuman/MPFB (free)** or CC0 scans; GTA-level fidelity needs decent topology + PBR skin (subsurface), not film-VFX detail. Faces styled gaunt, mustaches, period haircuts | 2–3 days |
+| Wardrobe | Long wool coats (cloth-sim, baked), waistcoats, **flat caps**; fabric from PolyHaven CC0 textures | 1–2 days |
+| Animation | **Mixamo (free)** mocap retargeted: sit-lean, smoke idle, stand-up, arm gestures. Hand-keyed: knuckle roll, thumb flick, reactions. Facial: minimal — jaw/brow bones + the lighting does the acting | 2–3 days |
 
-**Total: ~5–8 focused days**, of which GPU render time is only a few hours —
-the RTX 3050 makes this very feasible on this exact machine.
+### 3.2 Environment
+- Modular 1920s bar corner: table, bentwood chairs, back bar shelf w/ bottles
+  (bokeh fodder), hanging cone lamp, sash window with **rain** (animated normal
+  map + streak particles), wet-look floor.
+- Props/textures from **PolyHaven (CC0)** + BlenderKit free tier; hero table &
+  coin fully custom. Effort: 2–3 days.
 
-### Sequencing note
-B2 (hero coin) is worth doing **first and alone**: ~half a day total, and the
-app + widget visibly jump in quality before any of the film work lands.
+### 3.3 Atmosphere & light
+- Room haze: Principled Volume (cheap). Cigarette wisp + apex smoke: one small
+  baked sim (~30 min bake).
+- Key: hanging lamp (warm, hard). Back: window (cool moon/street). Ember, match
+  flare as practicals. Per-shot relight is allowed — film rules, not game rules.
+
+### 3.4 Render strategy (hybrid — the sane path)
+| Shots | Engine | Why |
+|---|---|---|
+| 1, 2, 3, 9 (people, set) | **EEVEE-Next** | Character shots need DoF/bloom/volumes — all excellent and 5–15 s/frame |
+| 4, 5, 7, 8 (coin close-ups) | **Cycles + OptiX** | Real metal reflections on the hero object |
+| 6 (apex orbit) | **Cycles + OptiX** | The money shot — reflections of the three men in the rim |
+
+### 3.5 Render-time budget (RTX 3050, 1920×804, OptiX denoise)
+| Job | Frames | Per frame | Total |
+|---|---|---|---|
+| EEVEE shots (1,2,3,9 both endings) | ~330 | 5–15 s | 0.5–1.5 h |
+| Cycles close-ups (4,5,7,8) | ~200 | 45–120 s | 2.5–6.5 h |
+| Cycles apex orbit (6) | ~130 | 60–150 s | 2–5.5 h |
+| **Hybrid total (both endings)** | ~660 | — | **≈ 5–13 h** (1 overnight) |
+| All-Cycles ultra pass (optional final) | ~660 | 2–5 min | 22–55 h (2–3 overnights) |
+
+> 4 GB VRAM rules: one .blend per shot, 2K texture cap, modest smoke bakes,
+> persistent-data off between shots. Batch script with resume (`tools/render_scene.py`).
+
+### 3.6 Post
+Blender compositor or ffmpeg pass: grain, halation, vignette, teal/amber grade,
+2.39:1 hard matte, audio mix (rain/gramophone bed + foley + score sting) →
+H.264 CRF 20 segments.
 
 ---
 
-## 6. Risks & mitigations
+## 4. Sound design (as important as pixels)
+- Bed: rain + gramophone jazz (period-correct, royalty-free or synthesized)
+- Foley: cloth, chair, coin-knuckle roll, cigarette
+- The dilation moment: all ambience ducks into a sub-drone + heartbeat at 0:13.5
+- Impact stack: snap-whoosh + clink + felt thud, haptic fired from Dart in sync
+- Endings: two reaction mixes
 
+---
+
+## 5. App integration
+1. Segmented gapless playback (`video_player`, dual pre-initialized controllers);
+   result picked at tap → queue `end_heads` or `end_tails`.
+2. Live Flutter layers stay on top: film grain, HEADS/TAILS title (crisper than
+   baked, localizable), sparks, haptics.
+3. **Skip**: any tap → jump to 0:21 (the landing). Double-tap → instant result.
+4. Widget & app icon inherit the photoreal coin frames automatically (same
+   `assets/coin/` filenames).
+5. Battery/thermal: video decode is cheap (hardware decoder) — *lighter* than
+   the current real-time effect stack during playback.
+
+---
+
+## 6. UX honesty — the 25-second problem
+A 25 s scene is glorious **once** and exhausting on flip #14. Shipping plan:
+- **First launch:** full 25 s scene (the "wow" that justifies ₹100)
+- **Cinematic (default after):** 15 s cut (shots 4–9 — macro, flick, apex, land)
+- **Quick toss:** current real-time flip (~3 s) — settings toggle
+- Skip always available mid-scene. This protects reviews.
+
+---
+
+## 7. Schedule (phases)
+
+| Phase | Work | Duration |
+|---|---|---|
+| G1 | Portable Blender install (~350 MB, no root) + OptiX verify | 0.5 h |
+| G2 | **Hero coin** model/shade + 90-frame render → app & widget upgrade ships immediately | 0.5 day |
+| G3 | Characters: bodies, wardrobe, caps, look-dev stills for approval | 3–5 days |
+| G4 | Environment + rain + haze; lighting look-dev stills for approval | 2–3 days |
+| G5 | Animation: mocap retarget + hand-keyed flick/reactions; blocking playblast (fast preview render) for approval | 3–5 days |
+| G6 | Final lighting per shot + hybrid render (1 overnight) + post/grade/audio mix | 2–3 days |
+| G7 | App integration: segmented playback, skip UX, modes, haptic sync | 1–2 days |
+| G8 | Device/perf test → version bump → push → CI signs & releases | 0.5 day |
+
+**Approval gates** at G3/G4/G5 (stills + playblast) so nothing renders overnight
+before the look is signed off.
+
+---
+
+## 8. Risks
 | Risk | Mitigation |
 |---|---|
-| 4 GB VRAM overflow on volumetrics | Separate scene files per shot; modest smoke bake; CPU+GPU hybrid tiles if needed |
-| Character looks cheap in close-up | He never is in close-up — Shot 2 is hand-only, everything else silhouette |
-| Video playback jank on low-end phones | H.264 baseline profile, 804 p letterboxed; pre-initialize controllers; fallback mode |
-| App size creep | CRF 20, two shared-audio tracks; cap videos ≤ 8 MB each |
-| Blender learning curve for maintenance | All scene generation scripted in `tools/` (`render_coin.py` pattern) so re-renders are one command |
+| Characters read "uncanny" in close-up | Peaky lighting: faces half-shadow/profile; the only true macro shots are hands & coin |
+| 4 GB VRAM | Per-shot .blends, 2K caps, EEVEE for people shots |
+| Render time balloons | Hybrid strategy locked; ultra pass optional at the very end |
+| APK size | Segmented videos, CRF 20, cap ≈ 30 MB added; Play delivers per-device |
+| 25 s fatigue | Three modes + skip (§6) |
+| Asset licensing | Mixamo (free w/ Adobe terms, allowed in apps), PolyHaven CC0, MPFB open-source — all safe for commercial use; log every asset in `CREDITS.md` |
