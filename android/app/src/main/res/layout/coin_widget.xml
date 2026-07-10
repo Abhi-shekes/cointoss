@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/widget_bg"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="COIN TOSS"
+        android:textColor="#9A958C"
+        android:textSize="11sp"
+        android:letterSpacing="0.25"
+        android:fontFamily="serif" />
+
+    <ImageView
+        android:id="@+id/coin_image"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        android:src="@drawable/coin_heads"
+        android:contentDescription="Coin" />
+
+    <TextView
+        android:id="@+id/result_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TAP TO TOSS"
+        android:textColor="#F3D89A"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:letterSpacing="0.15"
+        android:fontFamily="serif" />
+
+</LinearLayout>
