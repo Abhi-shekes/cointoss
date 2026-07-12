@@ -6,6 +6,10 @@ Writes 44.1kHz mono WAVs to assets/audio/. Re-run to tweak.
   clink.wav       metallic landing
   reveal.wav      warm brass result swell
   ambient_bar.wav looping smoky-room bed
+  ting.wav        thumbnail flick — bright metallic ping
+  thunder.wav     distant storm roll for the opening crane shot
+  apex.wav        looping sub-drone + heartbeat under the slow-mo apex
+  sting.wav       low brass hit stamped under HEADS/TAILS
 """
 import os
 import wave
@@ -102,12 +106,74 @@ def ambient(dur=4.0):
     return loopable * 0.35
 
 
+def ting(dur=0.35):
+    n = int(SR * dur)
+    t = np.linspace(0, dur, n)
+    partials = [(3950, 1.0), (5880, 0.6), (8300, 0.35)]
+    body = np.zeros(n)
+    for f, amp in partials:
+        body += amp * np.sin(2 * np.pi * f * t) * np.exp(-t * (14 + f / 700))
+    strike = rng.standard_normal(n) * np.exp(-t * 160) * 0.4
+    return (body / len(partials) + strike) * 0.8
+
+
+def thunder(dur=2.6):
+    n = int(SR * dur)
+    t = np.linspace(0, dur, n)
+    rumble = onepole_lp(rng.standard_normal(n), 0.004)
+    rumble /= np.max(np.abs(rumble)) + 1e-9
+    # two rolling swells — a near crack decaying into a distant roll
+    swell = np.exp(-t * 2.2) * 0.9 + np.exp(-((t - 1.1) ** 2) / 0.18) * 0.5
+    crack = onepole_lp(rng.standard_normal(n), 0.08) * np.exp(-t * 24) * 0.5
+    return (rumble * swell + crack) * 0.8
+
+
+def apex(dur=4.0):
+    """Loopable time-dilation bed: 45 Hz sub-drone + slowed heartbeat."""
+    n = int(SR * dur)
+    t = np.linspace(0, dur, n)
+    drone = 0.35 * np.sin(2 * np.pi * 45 * t) * (0.8 + 0.2 * np.sin(2 * np.pi * 0.5 * t))
+    drone += 0.12 * np.sin(2 * np.pi * 90 * t + 0.5)
+    beat = np.zeros(n)
+    for start in np.arange(0, dur, 1.0):          # 60 bpm, lub-dub
+        for off, amp in ((0.0, 1.0), (0.16, 0.6)):
+            i0 = int((start + off) * SR)
+            if i0 >= n:
+                continue
+            seg = min(int(SR * 0.10), n - i0)
+            tb = np.linspace(0, seg / SR, seg)
+            beat[i0:i0 + seg] += amp * np.sin(2 * np.pi * 58 * tb) * np.exp(-tb * 40)
+    mix = drone + beat * 0.8
+    x = int(SR * 0.2)                              # seamless loop crossfade
+    fade = np.linspace(0, 1, x)
+    mix[:x] = mix[:x] * fade + mix[-x:] * fade[::-1]
+    return mix * 0.6
+
+
+def sting(dur=1.1):
+    n = int(SR * dur)
+    t = np.linspace(0, dur, n)
+    chord = [110.0, 164.81, 220.0]                 # low A stack — a verdict
+    tone = np.zeros(n)
+    for f in chord:
+        for k, amp in ((1, 1.0), (2, 0.45), (3, 0.22)):  # brassy harmonics
+            tone += amp * np.sin(2 * np.pi * f * k * t + 0.1 * k)
+    tone = onepole_lp(tone, 0.25)
+    hit = onepole_lp(rng.standard_normal(n), 0.02) * np.exp(-t * 30) * 0.5
+    e = env(n, 0.008, 0.8)
+    return (tone / (len(chord) * 1.7) + hit) * e * 0.85
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     save("whoosh.wav", whoosh())
     save("clink.wav", clink())
     save("reveal.wav", reveal())
     save("ambient_bar.wav", ambient())
+    save("ting.wav", ting())
+    save("thunder.wav", thunder())
+    save("apex.wav", apex())
+    save("sting.wav", sting())
     print("Wrote SFX to", os.path.abspath(OUT))
 
 

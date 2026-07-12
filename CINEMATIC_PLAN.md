@@ -1,5 +1,16 @@
 # 🎬 CINEMATIC PLAN v3 — "THE WAGER" (GTA-cutscene grade, 15–30 s per flip)
 
+> **STATUS:** a full **real-time v1 of "The Wager" now ships in-app** — a 13 s
+> shot-sequenced Flutter cutscene (crane-down, dolly, flick, slow-mo apex,
+> whip-drop, slam, reveal) with silhouetted characters, volumetric lamp shaft,
+> rain window, lightning, letterbox, split-tone grade, and a new
+> thunder/heartbeat/sting audio pass. See `lib/scenes/toss_scene.dart`,
+> `lib/widgets/bar_set.dart`, `lib/widgets/cinema.dart`. Tap mid-scene skips
+> to the drop; a Quick-toss toggle lives in settings. Look-dev frames:
+> `flutter test --dart-define=PREVIEW=true test/scene_preview_test.dart`
+> → `build/preview/`. The Blender pipeline below remains the photoreal
+> upgrade path (hero coin frames drop in with zero code changes).
+
 > Target look: a **GTA-style in-game cutscene** — realistic characters, a lived-in
 > 1920s bar, film-language cameras (crane, rack focus, cut-on-action), heavy
 > atmosphere, cinematic grade. One flip = one **25-second scene** (configurable

@@ -9,9 +9,18 @@ class Settings extends ChangeNotifier {
 
   bool _sound = true;
   bool _haptics = true;
+  bool _cinematic = true;
 
   bool get sound => _sound;
   bool get haptics => _haptics;
+
+  /// Full ~13 s "The Wager" cutscene vs. the ~3 s quick toss.
+  bool get cinematic => _cinematic;
+
+  set cinematic(bool v) {
+    _cinematic = v;
+    notifyListeners();
+  }
 
   set sound(bool v) {
     _sound = v;
