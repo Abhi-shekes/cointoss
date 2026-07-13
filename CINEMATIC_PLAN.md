@@ -1,15 +1,35 @@
 # 🎬 CINEMATIC PLAN v3 — "THE WAGER" (GTA-cutscene grade, 15–30 s per flip)
 
-> **STATUS:** a full **real-time v1 of "The Wager" now ships in-app** — a 13 s
-> shot-sequenced Flutter cutscene (crane-down, dolly, flick, slow-mo apex,
-> whip-drop, slam, reveal) with silhouetted characters, volumetric lamp shaft,
-> rain window, lightning, letterbox, split-tone grade, and a new
-> thunder/heartbeat/sting audio pass. See `lib/scenes/toss_scene.dart`,
-> `lib/widgets/bar_set.dart`, `lib/widgets/cinema.dart`. Tap mid-scene skips
-> to the drop; a Quick-toss toggle lives in settings. Look-dev frames:
-> `flutter test --dart-define=PREVIEW=true test/scene_preview_test.dart`
-> → `build/preview/`. The Blender pipeline below remains the photoreal
-> upgrade path (hero coin frames drop in with zero code changes).
+> **STATUS v2 — THE FILM SHIPS.** The plan below is now **implemented as an
+> actual Blender-rendered film**, built and rendered headless on this machine
+> (portable Blender 4.5.11 in `~/blender`):
+>
+> - **Photoreal hero coin**: `tools/gen_coin_maps.py` (minted relief height
+>   maps: capped-profile bust / laurel-wreath T) + `tools/render_coin.py`
+>   (Cycles, engraved bump, reeded edge, aged brass) → 90 frames in
+>   `assets/coin/` + widget drawables. SHIPPED.
+> - **"The Wager" film**: `tools/build_wager.py` builds the full 3D bar
+>   (oak table, back-bar bottles, cone lamp + volumetric shaft, rain window
+>   with lightning, three wool-coated men with flat caps, cigarette ember +
+>   smoke), authors 7 film cameras (crane/dolly/set/flick/apex-orbit/whip-
+>   drop/reveal, all with true DoF), animates the coin flight, and renders
+>   16 s @ 24 fps 2.39:1. Frames 1-276 shared, 277-384 per ending.
+> - **Engine note**: EEVEE-Next headless (GL) — CUDA/OptiX is wedged on this
+>   box (`cuInit: Unknown error`, system-wide; a reboot or
+>   `sudo rmmod nvidia_uvm && sudo modprobe nvidia_uvm` should revive it,
+>   after which `--engine cycles` gives the ray-traced pass).
+>   Also: never call `read_factory_settings(use_empty=True)` headless — it
+>   permanently breaks GPU device enumeration for the session.
+> - **Post**: `tools/encode_film.sh` grades (teal/amber split-tone, vignette)
+>   and encodes H.264 segments → `assets/film/{intro,end_heads,end_tails}.mp4`.
+> - **App**: `lib/scenes/film_scene.dart` plays the segments gaplessly with
+>   dual pre-initialized `video_player` controllers; result picked at tap;
+>   grain/stamp/sparks/haptics/audio cues stay live in Flutter; tap skips to
+>   the drop. Falls back to the real-time scene (below) when footage is
+>   absent; Quick-toss toggle preserved.
+>
+> The earlier **real-time v1** (13 s Flutter-painted cutscene) remains in
+> `lib/scenes/toss_scene.dart` as the no-footage fallback and quick mode.
 
 > Target look: a **GTA-style in-game cutscene** — realistic characters, a lived-in
 > 1920s bar, film-language cameras (crane, rack focus, cut-on-action), heavy

@@ -141,6 +141,47 @@ class Halation extends StatelessWidget {
   }
 }
 
+/// HEADS / TAILS stamped in engraved gold over the reveal.
+/// [progress] 0..1 drives the scale-settle and fade-in.
+class GoldStamp extends StatelessWidget {
+  const GoldStamp({
+    super.key,
+    required this.text,
+    required this.progress,
+    this.alignment = const Alignment(0, -0.45),
+  });
+  final String text;
+  final double progress;
+  final Alignment alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    if (progress <= 0.01) return const SizedBox.shrink();
+    final style = Theme.of(context).textTheme.displayLarge;
+    final scale = 1.15 - 0.15 * Curves.easeOutCubic.transform(progress);
+    return IgnorePointer(
+      child: Align(
+        alignment: alignment,
+        child: Transform.scale(
+          scale: scale,
+          child: Opacity(
+            opacity: progress.clamp(0.0, 1.0),
+            child: Text(
+              text,
+              style: style?.copyWith(
+                shadows: const [
+                  Shadow(color: Colors.black87, blurRadius: 24),
+                  Shadow(color: Color(0x88E8A54B), blurRadius: 40),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Whispered engraved title ("CALL IT.") that breathes in and out.
 /// [opacity] 0..1 drives both fade and a slight tracking widen.
 class TitleCard extends StatelessWidget {
