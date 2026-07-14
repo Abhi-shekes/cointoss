@@ -10,7 +10,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 GRADE="curves=b='0/0.03 0.5/0.5 1/0.97',colorbalance=bs=0.07:rs=-0.03:rh=0.05:bh=-0.05,eq=saturation=1.06:contrast=1.05,vignette=PI/4.6"
-ENC=(-c:v libx264 -preset slow -crf 21 -pix_fmt yuv420p -movflags +faststart -an)
+# Main profile + fastdecode keeps cheap phone SoCs on the hardware path.
+ENC=(-c:v libx264 -profile:v main -level:v 4.0 -preset medium
+     -tune fastdecode -crf 21 -pix_fmt yuv420p -movflags +faststart -an)
 
 mkdir -p assets/film
 ffmpeg -y -framerate 24 -start_number 1 -i film_work/master/%04d.png \

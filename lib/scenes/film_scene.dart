@@ -53,6 +53,7 @@ class _FilmSceneState extends State<FilmScene>
   bool _heads = true;
   double _stamp = 0;
   int _tossCount = 0;
+  Future<void>? _endingReady;
 
   VideoPlayerController get _ending => _heads ? _endHeads : _endTails;
 
@@ -66,17 +67,23 @@ class _FilmSceneState extends State<FilmScene>
     _intro = VideoPlayerController.asset('assets/film/intro.mp4');
     _endHeads = VideoPlayerController.asset('assets/film/end_heads.mp4');
     _endTails = VideoPlayerController.asset('assets/film/end_tails.mp4');
+    _intro.addListener(_onIntroTick);
+    _endHeads.addListener(_onEndingTick);
+    _endTails.addListener(_onEndingTick);
     _init();
     SoundEngine.instance.startAmbient();
   }
 
   Future<void> _init() async {
-    await Future.wait(
-        [_intro.initialize(), _endHeads.initialize(), _endTails.initialize()]);
-    _intro.addListener(_onIntroTick);
-    _endHeads.addListener(_onEndingTick);
-    _endTails.addListener(_onEndingTick);
+    // Only the intro holds a codec up front; the chosen ending initializes
+    // lazily at tap time — it has the whole 11.5 s intro to get ready.
+    await _intro.initialize();
     if (mounted) setState(() => _phase = FilmPhase.idle);
+  }
+
+  Future<void> _ensureEnding(VideoPlayerController c) async {
+    if (!c.value.isInitialized) await c.initialize();
+    await c.seekTo(Duration.zero);
   }
 
   @override
@@ -130,7 +137,7 @@ class _FilmSceneState extends State<FilmScene>
     _stamp = 0;
     _clearCues();
     _intro.seekTo(Duration.zero);
-    _ending.seekTo(Duration.zero);
+    _endingReady = _ensureEnding(_ending);
     setState(() => _phase = FilmPhase.intro);
     _intro.play();
 
@@ -142,9 +149,11 @@ class _FilmSceneState extends State<FilmScene>
     _cue(7.4, s.apexStart);
   }
 
-  void _startEnding() {
+  Future<void> _startEnding() async {
     _clearCues();
     _intro.pause();
+    await (_endingReady ?? _ensureEnding(_ending));
+    if (!mounted || _phase == FilmPhase.ending) return;
     setState(() => _phase = FilmPhase.ending);
     _ending.play();
 
@@ -179,7 +188,6 @@ class _FilmSceneState extends State<FilmScene>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final playing = _phase == FilmPhase.intro || _phase == FilmPhase.ending;
     final active = _phase == FilmPhase.ending || _phase == FilmPhase.revealed
         ? _ending
@@ -198,33 +206,28 @@ class _FilmSceneState extends State<FilmScene>
             return Stack(
               fit: StackFit.expand,
               children: [
-                // The film band — 2.39:1 footage cover-fit into a wide
-                // window, cinema black above and below.
-                Center(
-                  child: Transform.translate(
-                    offset: Offset(shakeAmt, shakeAmt * 0.4),
-                    child: SizedBox(
-                      width: size.width,
-                      height: size.height * 0.44,
-                      child: _phase == FilmPhase.loading
-                          ? const ColoredBox(color: Colors.black)
-                          : ClipRect(
-                              child: FittedBox(
-                                fit: BoxFit.cover,
-                                child: SizedBox(
-                                  width: active.value.size.width,
-                                  height: active.value.size.height,
-                                  child: VideoPlayer(active),
-                                ),
-                              ),
+                // Full-screen portrait footage, cover-fit to any aspect.
+                // Grade and vignette are baked into the film — the only
+                // live layer over the video is a light grain.
+                Transform.translate(
+                  offset: Offset(shakeAmt, shakeAmt * 0.4),
+                  child: _phase == FilmPhase.loading ||
+                          !active.value.isInitialized
+                      ? const ColoredBox(color: Colors.black)
+                      : SizedBox.expand(
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            clipBehavior: Clip.hardEdge,
+                            child: SizedBox(
+                              width: active.value.size.width,
+                              height: active.value.size.height,
+                              child: VideoPlayer(active),
                             ),
-                    ),
-                  ),
+                          ),
+                        ),
                 ),
                 Sparks(progress: _shake.value, seed: _tossCount),
-                const ColorGrade(strength: 0.5),
-                const Vignette(strength: 0.7),
-                const FilmGrain(),
+                const FilmGrain(intensity: 0.04, density: 420),
                 GoldStamp(
                   text: _heads ? 'HEADS' : 'TAILS',
                   progress: _stamp,

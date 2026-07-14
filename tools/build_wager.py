@@ -44,8 +44,8 @@ ENDING = arg("--ending", "heads")       # heads | tails
 START = arg("--start", 1)
 END = arg("--end", 384)
 OUT = arg("--out", os.path.join(ROOT, "film_work", "stills"))
-RES_X = arg("--resx", 1152)
-RES_Y = arg("--resy", 482)
+RES_X = arg("--resx", 704)   # portrait full-screen (19.6:9 vertical),
+RES_Y = arg("--resy", 1536)  # multiples of 16 for happy hardware decoders
 SAMPLES = arg("--samples", 44)
 MBLUR = arg("--mblur", 1)  # 1 only for the flick + drop ranges — it is the
 #                            dominant cost on volume-heavy frames
@@ -757,6 +757,10 @@ def animate_tosser(men):
 def make_cam(name, lens, fstop, focus=None):
     data = bpy.data.cameras.new(name)
     data.lens = lens
+    # Lock the 36mm sensor to the horizontal axis: portrait renders keep the
+    # same left-right framing as the landscape look-dev and simply gain
+    # vertical field (lamp above, table pool below).
+    data.sensor_fit = "HORIZONTAL"
     data.dof.use_dof = True
     data.dof.aperture_fstop = fstop
     if focus is not None:
