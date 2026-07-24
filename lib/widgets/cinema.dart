@@ -1,31 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
-/// Film-language overlays: letterbox mattes, teal/amber grade, lightning,
-/// halation flare and engraved title cards. All are cheap gradient/blend
-/// layers driven by scalar params so the scene can animate them per shot.
-
-/// 2.39:1-style black mattes that close in as the cutscene starts.
-/// [amount] 0 = open (no bars), 1 = fully closed cinema frame.
-class Letterbox extends StatelessWidget {
-  const Letterbox({super.key, required this.amount});
-  final double amount;
-
-  @override
-  Widget build(BuildContext context) {
-    if (amount <= 0) return const SizedBox.shrink();
-    final h = MediaQuery.of(context).size.height * 0.13 * amount;
-    return IgnorePointer(
-      child: Column(
-        children: [
-          Container(height: h, color: Colors.black),
-          const Spacer(),
-          Container(height: h, color: Colors.black),
-        ],
-      ),
-    );
-  }
-}
+/// Film-language overlays: teal/amber grade and lightning flash. Cheap
+/// gradient/blend layers driven by scalar params so the scene can animate
+/// them per shot.
 
 /// Cinematic split-tone grade: teal creeping into the shadows at the edges,
 /// warm amber lifted in the lamp pool. [strength] 0..1.
@@ -101,117 +79,6 @@ class LightningFlash extends StatelessWidget {
           backgroundBlendMode: BlendMode.plus,
         ),
         child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
-/// Warm halation bloom centered on the coin for the reveal flare.
-/// [value] 0..1, [center] in alignment space.
-class Halation extends StatelessWidget {
-  const Halation({
-    super.key,
-    required this.value,
-    this.center = Alignment.center,
-  });
-  final double value;
-  final Alignment center;
-
-  @override
-  Widget build(BuildContext context) {
-    if (value <= 0.01) return const SizedBox.shrink();
-    return IgnorePointer(
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: center,
-            radius: 0.85,
-            colors: [
-              AppColors.brassLight.withValues(alpha: 0.22 * value),
-              AppColors.amber.withValues(alpha: 0.08 * value),
-              Colors.transparent,
-            ],
-            stops: const [0.0, 0.35, 1.0],
-          ),
-          backgroundBlendMode: BlendMode.plus,
-        ),
-        child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
-/// HEADS / TAILS stamped in engraved gold over the reveal.
-/// [progress] 0..1 drives the scale-settle and fade-in.
-class GoldStamp extends StatelessWidget {
-  const GoldStamp({
-    super.key,
-    required this.text,
-    required this.progress,
-    this.alignment = const Alignment(0, -0.45),
-  });
-  final String text;
-  final double progress;
-  final Alignment alignment;
-
-  @override
-  Widget build(BuildContext context) {
-    if (progress <= 0.01) return const SizedBox.shrink();
-    final style = Theme.of(context).textTheme.displayLarge;
-    final scale = 1.15 - 0.15 * Curves.easeOutCubic.transform(progress);
-    return IgnorePointer(
-      child: Align(
-        alignment: alignment,
-        child: Transform.scale(
-          scale: scale,
-          child: Opacity(
-            opacity: progress.clamp(0.0, 1.0),
-            child: Text(
-              text,
-              style: style?.copyWith(
-                shadows: const [
-                  Shadow(color: Colors.black87, blurRadius: 24),
-                  Shadow(color: Color(0x88E8A54B), blurRadius: 40),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Whispered engraved title ("CALL IT.") that breathes in and out.
-/// [opacity] 0..1 drives both fade and a slight tracking widen.
-class TitleCard extends StatelessWidget {
-  const TitleCard({super.key, required this.text, required this.opacity});
-  final String text;
-  final double opacity;
-
-  @override
-  Widget build(BuildContext context) {
-    if (opacity <= 0.01) return const SizedBox.shrink();
-    return IgnorePointer(
-      child: Center(
-        child: Opacity(
-          opacity: opacity.clamp(0.0, 1.0),
-          child: Text(
-            text,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Cinzel',
-              fontSize: 30,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 10 + 4 * (1 - opacity),
-              color: AppColors.brassLight.withValues(alpha: 0.92),
-              shadows: const [
-                Shadow(color: Colors.black87, blurRadius: 18),
-                Shadow(color: Color(0x66E8A54B), blurRadius: 30),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
