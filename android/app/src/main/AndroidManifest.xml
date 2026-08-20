@@ -31,7 +31,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <action android:name="in.filamentai.cointoss.ACTION_TOSS" />
+                <action android:name="com.abhishektiwari.cointoss.ACTION_TOSS" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

@@ -1,4 +1,4 @@
-package `in`.filamentai.cointoss
+package com.abhishektiwari.cointoss
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -16,7 +16,7 @@ import kotlin.random.Random
 class CoinWidgetProvider : AppWidgetProvider() {
 
     companion object {
-        const val ACTION_TOSS = "in.filamentai.cointoss.ACTION_TOSS"
+        const val ACTION_TOSS = "com.abhishektiwari.cointoss.ACTION_TOSS"
 
         fun render(
             context: Context,

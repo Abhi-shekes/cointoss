@@ -3,7 +3,7 @@
 Paid Android app (₹100). No login, no database, no network — nothing is stored
 or transmitted. Single cinematic coin-flip screen.
 
-- **applicationId:** `in.filamentai.cointoss`
+- **applicationId:** `com.abhishektiwari.cointoss`
 - **App name:** Coin Toss
 - **Version:** bump `version:` in `pubspec.yaml` (e.g. `1.0.0+1`) before each release.
   The `+N` build number must increase for every Play upload.
